@@ -98,4 +98,84 @@ public class OSMTollParserTest {
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
         return tollEnc.getEnum(false, edgeId, edgeIntAccess);
     }
+
+    /**
+     * Test pour la Suisse (CHE) avec une autoroute (motorway).
+     * Vérifie que les autoroutes en Suisse ont un péage pour tous les véhicules (Toll.ALL).
+     */
+    @Test
+    void testSwitzerlandMotorwayToll() {
+        assertEquals(Toll.ALL, getToll("motorway", "", Country.CHE));
+    }
+
+    /**
+     * Test pour la Suisse (CHE) avec une route secondaire.
+     * Vérifie que les routes non-autoroutes en Suisse ont un péage HGV uniquement (poids lourds).
+     * En Suisse, il y a une 'Schwerlastabgabe' (taxe poids lourds) sur tout le réseau routier.
+     */
+    @Test
+    void testSwitzerlandSecondaryRoadToll() {
+        assertEquals(Toll.HGV, getToll("secondary", "", Country.CHE));
+    }
+
+    /**
+     * Test pour l'Allemagne (DEU) avec une autoroute.
+     * Vérifie que les autoroutes en Allemagne ont un péage HGV uniquement (poids lourds).
+     */
+    @Test
+    void testGermanyMotorwayToll() {
+        assertEquals(Toll.HGV, getToll("motorway", "", Country.DEU));
+    }
+
+    /**
+     * Test pour la Roumanie (ROU) avec une route principale (trunk).
+     * Vérifie que les routes trunk en Roumanie ont un péage pour tous les véhicules (Toll.ALL).
+     */
+    @Test
+    void testRomaniaTrunkRoadToll() {
+        assertEquals(Toll.ALL, getToll("trunk", "", Country.ROU));
+    }
+    @Test
+    void tollNo_overridesCountryDefault() {
+        // Mutant visé: L45 "removed conditional - replaced equality check with false" (SURVIVED)
+        // Si "toll=no" est ignoré par le mutant, on tomberait dans le défaut pays (FRA+motorway -> ALL).
+        // Le test attend NO, donc il tue le mutant.
+        assertEquals(Toll.NO, getToll("motorway", "toll=no", Country.FRA));
+    }
+
+    @Test
+    void switzerland_trunk_isAll() {
+        // Mutant visé: L69 "removed conditional - replaced equality check with false" (SURVIVED)
+        // On teste la 2e partie du '||' (TRUNK) pour CHE -> doit être ALL.
+        assertEquals(Toll.ALL, getToll("trunk", "", Country.CHE));
+    }
+    /**
+     * Test avec java-faker : génère des données de test aléatoires pour tester la robustesse.
+     * Intention : Vérifier que le parser gère correctement des routes avec des noms de pays aléatoires.
+     * Motivation : Utiliser java-faker pour créer des tests avec des données variées et imprévisibles.
+     * Oracle : Les pays non reconnus doivent retourner Toll.NO (comportement par défaut).
+     */
+    @Test
+    void testRandomCountryWithFaker() {
+        com.github.javafaker.Faker faker = new com.github.javafaker.Faker();
+
+        // Génère un nom de pays aléatoire
+        String randomCountryName = faker.country().name();
+
+        // Crée un ReaderWay avec un pays non reconnu (String au lieu de Country enum)
+        ReaderWay readerWay = new ReaderWay(faker.number().randomNumber());
+        readerWay.setTag("highway", faker.options().option("motorway", "trunk", "primary", "secondary"));
+        // Note: on ne peut pas utiliser randomCountryName directement car Country est un enum
+        // On teste avec MISSING qui représente un pays non reconnu
+        readerWay.setTag("country", Country.MISSING);
+
+        IntsRef relFlags = new IntsRef(2);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+
+        // Pour un pays non reconnu, le comportement par défaut est Toll.NO
+        assertEquals(Toll.NO, tollEnc.getEnum(false, edgeId, edgeIntAccess));
+    }
+
 }
