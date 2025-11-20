@@ -1,0 +1,50 @@
+name: Mutation Testing
+
+on:
+  push:
+    branches: [ tache3-integration ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  mutation-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Run Mutation Tests
+        run: mvn org.pitest:pitest-maven:mutationCoverage -DtimestampedReports=false
+        working-directory: ./core
+
+      - name: Check Mutation Score
+        run: |
+          MUTATION_SCORE=$(grep -oP 'Line Coverage: \K[0-9]+' core/target/pit-reports/*/index.html | head -1)
+          echo "Mutation Score: $MUTATION_SCORE%"
+          
+          if [ -f .previous-mutation-score ]; then
+            PREVIOUS_SCORE=$(cat .previous-mutation-score)
+            echo "Previous Score: $PREVIOUS_SCORE%"
+          
+            if [ "$MUTATION_SCORE" -lt "$PREVIOUS_SCORE" ]; then
+              echo "❌ Mutation score decreased from $PREVIOUS_SCORE% to $MUTATION_SCORE%"
+              exit 1
+            fi
+          fi
+          
+          echo $MUTATION_SCORE > .previous-mutation-score
+          echo "✅ Mutation score: $MUTATION_SCORE%"
+
+      - name: Upload Mutation Report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: pit-reports
+          path: core/target/pit-reports/
