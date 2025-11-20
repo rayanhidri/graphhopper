@@ -16,6 +16,11 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+
+import com.graphhopper.util.FetchMode;
+
 @ExtendWith(MockitoExtension.class)
 public class DirectionResolverIntegrationTest {
 
@@ -99,5 +104,52 @@ public class DirectionResolverIntegrationTest {
         directionResolver.resolveDirections(1, location2);
 
         verify(mockEdgeExplorer, times(2)).setBaseNode(anyInt());
+    }
+    @Test
+    void testResolveDirections_withEdgeFilterRejectingBothDirections_handlesCorrectly() {
+        // Setup: edge exists but filter rejects both directions
+        when(mockEdgeIterator.next()).thenReturn(true, false);
+        when(mockEdgeFilter.accept(any(), anyBoolean())).thenReturn(false);
+
+        GHPoint location = new GHPoint(48.1, 9.1);
+        DirectionResolverResult result = directionResolver.resolveDirections(0, location);
+
+        assertNotNull(result, "Result should not be null");
+        verify(mockEdgeFilter, atLeastOnce()).accept(any(), anyBoolean());
+        verify(mockEdgeExplorer).setBaseNode(0);
+    }
+
+    @Test
+    void testResolveDirections_multipleNodesWithDifferentLocations_allProcessed() {
+        // Test multiple nodes
+        GHPoint location1 = new GHPoint(48.5, 9.5);
+        GHPoint location2 = new GHPoint(47.5, 8.5);
+        GHPoint location3 = new GHPoint(49.5, 10.5);
+
+        directionResolver.resolveDirections(1, location1);
+        directionResolver.resolveDirections(2, location2);
+        directionResolver.resolveDirections(3, location3);
+
+        verify(mockEdgeExplorer).setBaseNode(1);
+        verify(mockEdgeExplorer).setBaseNode(2);
+        verify(mockEdgeExplorer).setBaseNode(3);
+    }
+
+    @Test
+    void testResolveDirections_withVariousGHPointLocations_handlesAllCases() {
+        // Test boundary values
+        GHPoint[] locations = {
+                new GHPoint(0.0, 0.0),
+                new GHPoint(90.0, 180.0),
+                new GHPoint(-90.0, -180.0),
+                new GHPoint(48.8566, 2.3522)  // Paris
+        };
+
+        for (int i = 0; i < locations.length; i++) {
+            DirectionResolverResult result = directionResolver.resolveDirections(i, locations[i]);
+            assertNotNull(result, "Result should not be null for location " + i);
+        }
+
+        verify(mockEdgeExplorer, times(locations.length)).setBaseNode(anyInt());
     }
 }
