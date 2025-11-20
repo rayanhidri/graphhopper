@@ -209,10 +209,12 @@
                 </dependencies>
                 <configuration>
                     <targetClasses>
-                        <param>com.graphhopper.routing.util.parsers.OSMTollParser</param>
+                        <param>com.graphhopper.routing.PathExtractor</param>
+                        <param>com.graphhopper.routing.DirectionResolver</param>
                     </targetClasses>
                     <targetTests>
-                        <param>com.graphhopper.routing.util.parsers.OSMTollParserTest</param>
+                        <param>com.graphhopper.routing.PathExtractorIntegrationTest</param>
+                        <param>com.graphhopper.routing.DirectionResolverIntegrationTest</param>
                     </targetTests>
                     <mutators>
                         <mutator>DEFAULTS</mutator>
