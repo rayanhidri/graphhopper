@@ -26,6 +26,11 @@ jobs:
     - name: Run Mutation Tests with PIT
       run: mvn org.pitest:pitest-maven:mutationCoverage
       working-directory: ./core
+
+    - name: Check Mutation Score
+      if: always()
+      run: python3 .github/scripts/check-mutation-score.py
+
     
     - name: Upload Mutation Report
       if: always()
