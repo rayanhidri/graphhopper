@@ -20,8 +20,11 @@ jobs:
         distribution: 'temurin'
         cache: maven
     
+    - name: Build entire project
+      run: mvn clean install -DskipTests
+    
     - name: Run Mutation Tests with PIT
-      run: mvn test org.pitest:pitest-maven:mutationCoverage
+      run: mvn org.pitest:pitest-maven:mutationCoverage
       working-directory: ./core
     
     - name: Upload Mutation Report
