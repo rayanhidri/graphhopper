@@ -18,12 +18,12 @@
 package com.graphhopper.util;
 
 import org.junit.jupiter.api.Test;
-
 import java.util.Arrays;
 import java.util.Locale;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import com.github.javafaker.Faker;
 
 /**
  * @author Peter Karich
@@ -77,4 +77,93 @@ public class TranslationMapTest {
         Translation ptMap = SINGLETON.get("pt");
         assertTrue(ptMap.tr("roundabout_exit_onto", "1", "somestreet").contains("somestreet"));
     }
+
+    // ========== NOUVEAUX TESTS ==========
+
+    @Test
+    public void testPutAddsNewTranslationSuccessfully() {
+        // Arrange
+        TranslationMap.TranslationHashMap map = new TranslationMap.TranslationHashMap(Locale.FRENCH);
+        String key = "turn.left";
+        String value = "Tournez à gauche";
+
+        // Act
+        map.put(key, value);
+
+        // Assert
+        assertEquals(value, map.tr(key));
+        assertTrue(map.asMap().containsKey(key.toLowerCase()));
+        assertEquals(1, map.asMap().size());
+    }
+
+    @Test
+    public void testPutThrowsExceptionWhenOverwriting() {
+        // Arrange
+        TranslationMap.TranslationHashMap map = new TranslationMap.TranslationHashMap(Locale.FRENCH);
+        String key = "distance.km";
+        String firstValue = "kilomètres";
+        String secondValue = "km";
+
+        map.put(key, firstValue);
+
+        // Act & Assert - JUnit 5 syntaxe
+        assertThrows(IllegalStateException.class, () -> {
+            map.put(key, secondValue);
+        });
+    }
+
+    @Test
+    public void testTrReturnsKeyWhenTranslationNotFound() {
+        // Arrange
+        TranslationMap.TranslationHashMap map = new TranslationMap.TranslationHashMap(Locale.FRENCH);
+        String nonExistentKey = "nonexistent.key";
+
+        // Act
+        String result = map.tr(nonExistentKey);
+
+        // Assert
+        assertEquals(nonExistentKey, result);
+    }
+
+    /**
+     * Test 4 : Tester avec des données aléatoires générées par Java-Faker
+     */
+    @Test
+    public void testPutAndRetrieveWithRandomData() {
+        // Arrange - Utiliser Faker pour générer des données aléatoires
+        Faker faker = new Faker();
+        TranslationMap.TranslationHashMap map = new TranslationMap.TranslationHashMap(Locale.ENGLISH);
+
+        // Générer 5 traductions aléatoires
+        String key1 = faker.lorem().word();
+        String value1 = faker.address().city();
+
+        String key2 = faker.lorem().word();
+        String value2 = faker.name().fullName();
+
+        String key3 = faker.lorem().word();
+        String value3 = faker.company().name();
+
+        String key4 = faker.lorem().word();
+        String value4 = faker.food().dish();
+
+        String key5 = faker.lorem().word();
+        String value5 = faker.book().title();
+
+        // Act - Ajouter toutes les traductions
+        map.put(key1, value1);
+        map.put(key2, value2);
+        map.put(key3, value3);
+        map.put(key4, value4);
+        map.put(key5, value5);
+
+        // Assert - Vérifier que toutes sont récupérables
+        assertEquals(value1, map.tr(key1));
+        assertEquals(value2, map.tr(key2));
+        assertEquals(value3, map.tr(key3));
+        assertEquals(value4, map.tr(key4));
+        assertEquals(value5, map.tr(key5));
+        assertEquals(5, map.asMap().size());
+    }
 }
+
