@@ -1,0 +1,40 @@
+name: 'Rickroll on Test Failure'
+description: 'Rick Astley never gonna let you down... or your tests'
+inputs:
+  test-result:
+    description: 'Test result status'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - name: Never Gonna Give You Up 
+      if: inputs.test-result == 'failure'
+      shell: bash
+      run: |
+        echo "════════════════════════════════════════════════"
+        echo " We're no strangers to love... "
+        echo "════════════════════════════════════════════════"
+        echo ""
+        echo "You know the rules and so do I..."
+        echo "A full commitment's what I'm thinking of"
+        echo "You wouldn't get this from any other guy"
+        echo ""
+        echo " I just wanna tell you how I'm feeling "
+        echo "    Gotta make you understand"
+        echo ""
+        echo " NEVER GONNA GIVE YOU UP "
+        echo "NEVER GONNA LET YOU DOWN"
+        echo "NEVER GONNA RUN AROUND AND DESERT YOU"
+        echo "NEVER GONNA MAKE YOU CRY"
+        echo "NEVER GONNA SAY GOODBYE"
+        echo "NEVER GONNA TELL A LIE AND HURT YOU"
+        echo ""
+        echo "════════════════════════════════════════════════"
+        echo "Rick Astley - Never Gonna Give You Up"
+        echo "════════════════════════════════════════════════"
+        echo ""
+        echo "Your tests have been RICKROLLED! "
+        echo "Fix your tests and try again! "
+        echo ""
+        echo "Watch the full video: https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        echo "════════════════════════════════════════════════"
