@@ -28,9 +28,20 @@ jobs:
       working-directory: ./core
 
     - name: Check Mutation Score
+      id: mutation-check
       if: always()
+      continue-on-error: true
       run: python3 .github/scripts/check-mutation-score.py
 
+    - name: Rickroll on Failure
+      if: always()
+      uses: ./.github/actions/rickroll
+      with:
+        test-result: ${{ steps.mutation-check.outcome }}
+    
+    - name: Fail if mutation score dropped
+      if: steps.mutation-check.outcome == 'failure'
+      run: exit 1
     
     - name: Upload Mutation Report
       if: always()
